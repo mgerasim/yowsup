@@ -66,6 +66,11 @@ class AxolotlSendLayer(AxolotlBaseLayer):
                 self._sendIq(groupInfoIq, getResultNodes)
             else:
                 messageData = self.serializeToProtobuf(node)
+<<<<<<< HEAD
+=======
+                if not self.store.containsSession(recipient_id, 1):
+                    self.getKeysFor([node["to"]], lambda successJids, b: self.sendToContact(node) if len(successJids) == 1 else self.toLower(node), lambda: self.toLower(node))
+>>>>>>> a0d798a... Fixed get video properties in tools.py (just in python3 + versions). Need to install pyAv (pip3 install av)
                 if messageData:
                     if not self.store.containsSession(recipient_id, 1):
                         def on_get_keys(successJids,b):
