@@ -167,7 +167,7 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
     def parseAndHandleMessageProto(self, encMessageProtocolEntity, serializedData):
         node = encMessageProtocolEntity.toProtocolTreeNode()
         m = Message()
-        if sys.version_info >= (3,0):
+        if sys.version_info >= (3,0) and isinstance(serializedData,str):
             serializedData = serializedData.encode() 
         handled = False
         try:
@@ -176,7 +176,7 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
             print("DUMP:")
             print(serializedData)
             print([s for s in serializedData])
-            # print([ord(s) for s in serializedData])
+            #print([ord(s) for s in serializedData])
             raise
         if not m or not serializedData:
             raise ValueError("Empty message")
@@ -185,6 +185,10 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
             handled = True
             axolotlAddress = AxolotlAddress(encMessageProtocolEntity.getParticipant(False), 0)
             self.handleSenderKeyDistributionMessage(m.sender_key_distribution_message, axolotlAddress)
+        
+        print("MESSAGE")
+        print(node)
+        print(m)
 
         if m.HasField("conversation"):
             handled = True
@@ -201,7 +205,10 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
         elif m.HasField("image_message"):
             handled = True
             self.handleImageMessage(node, m.image_message)
-
+        elif m.HasField("video_message"):
+            handled = True
+            print(node)
+            #raise("OPA")
         if not handled:
             print(m)
             raise ValueError("Unhandled")

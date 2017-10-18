@@ -66,30 +66,37 @@ class AxolotlSendLayer(AxolotlBaseLayer):
                 self._sendIq(groupInfoIq, getResultNodes)
             else:
                 messageData = self.serializeToProtobuf(node)
-                if not self.store.containsSession(recipient_id, 1):
-                    self.getKeysFor([node["to"]], lambda successJids, b: self.sendToContact(node) if len(successJids) == 1 else self.toLower(node), lambda: self.toLower(node))
                 if messageData:
-                    sessionCipher = self.getSessionCipher(recipient_id)
-                    messageData = messageData.SerializeToString() + self.getPadding()
-                    ciphertext = sessionCipher.encrypt(messageData)
-                    mediaType = node.getChild("enc")["type"] if node.getChild("enc") else None
+                    if not self.store.containsSession(recipient_id, 1):
+                        def on_get_keys(successJids,b):
+                            print(successJids)
+                            if len(successJids) == 1:
+                                self.sendToContact(node)
+                            else:
+                                self.toLower(node)
+                        self.getKeysFor([node["to"]],on_get_keys, lambda: self.toLower(node))
+                    else :
+                        sessionCipher = self.getSessionCipher(recipient_id)
+                        messageData = messageData.SerializeToString() + self.getPadding()
+                        ciphertext = sessionCipher.encrypt(messageData)
+                        mediaType = node.getChild("enc")["type"] if node.getChild("enc") else None
 
-                    encEntity = EncryptedMessageProtocolEntity(
-                        [
-                            EncProtocolEntity(
-                                EncProtocolEntity.TYPE_MSG if ciphertext.__class__ == WhisperMessage else EncProtocolEntity.TYPE_PKMSG,
-                                2 if v2 else 1,
-                                ciphertext.serialize(), mediaType)],
-                        "text" if not mediaType else "media",
-                        _id=node["id"],
-                        to=node["to"],
-                        notify=node["notify"],
-                        timestamp=node["timestamp"],
-                        participant=node["participant"],
-                        offline=node["offline"],
-                        retry=node["retry"]
-                    )
-                    self.toLower(encEntity.toProtocolTreeNode())
+                        encEntity = EncryptedMessageProtocolEntity(
+                            [
+                                EncProtocolEntity(
+                                    EncProtocolEntity.TYPE_MSG if ciphertext.__class__ == WhisperMessage else EncProtocolEntity.TYPE_PKMSG,
+                                    2 if v2 else 1,
+                                    ciphertext.serialize(), mediaType)],
+                            "text" if not mediaType else "media",
+                            _id=node["id"],
+                            to=node["to"],
+                            notify=node["notify"],
+                            timestamp=node["timestamp"],
+                            participant=node["participant"],
+                            offline=node["offline"],
+                            retry=node["retry"]
+                        )
+                        self.toLower(encEntity.toProtocolTreeNode())
                 else:  # case of unserializable messages (audio, video) ?
                     self.toLower(node)
         else:
