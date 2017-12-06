@@ -48,7 +48,10 @@ class AxolotlBaseLayer(YowProtocolLayer):
 
     def getKeysFor(self, jids, resultClbk, errorClbk = None):
         def onSuccess(resultNode, getKeysEntity):
-            entity = ResultGetKeysIqProtocolEntity.fromProtocolTreeNode(resultNode)
+            try:
+                entity = ResultGetKeysIqProtocolEntity.fromProtocolTreeNode(resultNode)
+            except Exception as ex:
+                return
             resultJids = entity.getJids()
             successJids = []
             errorJids = {} #jid -> exception
