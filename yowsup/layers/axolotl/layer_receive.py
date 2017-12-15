@@ -177,7 +177,7 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
             print(serializedData)
             print([s for s in serializedData])
             #print([ord(s) for s in serializedData])
-            raise
+            #raise
         if not m or not serializedData:
             raise ValueError("Empty message")
 
@@ -211,7 +211,7 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
             #raise("OPA")
         if not handled:
             print(m)
-            raise ValueError("Unhandled")
+            #raise ValueError("Unhandled")
 
     def handleSenderKeyDistributionMessage(self, senderKeyDistributionMessage, axolotlAddress):
         groupId = senderKeyDistributionMessage.groupId
