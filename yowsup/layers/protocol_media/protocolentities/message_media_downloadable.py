@@ -18,6 +18,10 @@ class DownloadableMediaMessageProtocolEntity(MediaMessageProtocolEntity):
         </media>
     </message>
     '''
+    AUDIO_KEY = "576861747341707020417564696f204b657973"
+    VIDEO_KEY = "576861747341707020566964656f204b657973"
+    IMAGE_KEY = "576861747341707020496d616765204b657973" 
+    
     def __init__(self, mediaType,
             mimeType, fileHash, url, ip, size, fileName, mediaKey = None,
             _id = None, _from = None, to = None, notify = None, timestamp = None,
@@ -56,16 +60,18 @@ class DownloadableMediaMessageProtocolEntity(MediaMessageProtocolEntity):
 
     def toProtocolTreeNode(self):
         node = super(DownloadableMediaMessageProtocolEntity, self).toProtocolTreeNode()
-        mediaNode = node.getChild("media")
+        mediaNode = node.getChild("enc")
         mediaNode.setAttribute("mimetype",  self.mimeType)
         mediaNode.setAttribute("filehash",  self.fileHash)
-        mediaNode.setAttribute("url",       self.url)
+        mediaNode.setAttribute("url",       self.url["url"].encode())
         if self.ip:
             mediaNode.setAttribute("ip",        self.ip)
         mediaNode.setAttribute("size",      str(self.size))
         mediaNode.setAttribute("file",      self.fileName)
-        if self.mediaKey:
-            mediaNode.setAttribute("mediakey", self.mediaKey)
+
+        mediaNode.setAttribute("mediakey", self.url["mediaKey"])
+        mediaNode.setAttribute("anu", self.url["mediaKey"])
+        mediaNode.setAttribute("file_enc_sha256", self.url["file_enc_sha256"])
 
         return node
 
@@ -93,8 +99,16 @@ class DownloadableMediaMessageProtocolEntity(MediaMessageProtocolEntity):
         url = builder.get("url")
         ip = builder.get("ip")
         assert url, "Url is required"
-        mimeType = builder.get("mimetype", MimeTools.getMIME(builder.getOriginalFilepath())[0])
-        filehash = WATools.getFileHashForUpload(builder.getFilepath())
+        mimeType = builder.get("mimetype", MimeTools.getMIME(builder.getOriginalFilepath()))
+        filehash = WATools.getFileHashForUpload2(builder.getFilepath())
         size = os.path.getsize(builder.getFilepath())
         fileName = os.path.basename(builder.getFilepath())
         return DownloadableMediaMessageProtocolEntity(builder.mediaType, mimeType, filehash, url, ip, size, fileName, to = builder.jid, preview = builder.get("preview"))
+
+    @staticmethod
+    def fromFilePath(fpath, url, mediaType, ip, to, mimeType = None, preview = None, filehash = None, filesize = None):
+        mimeType = mimeType or MimeTools.getMIME(fpath)
+        filehash = filehash or WATools.getFileHashForUpload2(fpath)
+        size = filesize or os.path.getsize(fpath)
+        fileName = os.path.basename(fpath)
+        return DownloadableMediaMessageProtocolEntity(mediaType, mimeType, filehash, url, ip, size, fileName, to = to, preview = preview)
